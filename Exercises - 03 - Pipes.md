@@ -61,6 +61,54 @@
 
 `:~$ cat /etc/passwd | cut -d ':' -f5 | cut -d ',' -f1 | awk '/^.{6,}$/ {print $0}'`
 
+#### Изведете имената на хората с второ име по-късо от 8 (<=7) символа според /etc/passwd // !(>7) = ?
+
+`~$ cat /etc/passwd | cut -d ':' -f5 | cut -d ' ' -f2 | cut -d ',' -f1 | awk '/^.{,7}$/ {print $0}'`
+
+#### Изведете целите редове от /etc/passwd за хората от предходната задача.
+
+` egrep '\s[^, ]{1,7},' `
+- means match anything that: starts with withspace, continues not with ',' or withspace and is between 1 and 7 characters
+
+#### Копирайте <РЕПО>/exercises/data/emp.data във вашата home директория.
+#### Посредством awk, използвайки копирания файл за входнни данни, изведете:
+
+- общия брой редове  `~$ cat emp.data | awk '{count+=1} END {print count}'`
+- третия ред `~$ cat emp.data | awk '{count+=1} {if(count==3) print $0}'`
+- последното поле от всеки ред  `~$ cat emp.data | awk '{print $3}'`
+- последното поле на последния ред  `~$ cat emp.data | awk 'END{print $3}'`  `cat emp.data | awk 'END{print $NF}'`
+- всеки ред, който има повече от 4 полета `~$ cat emp.data | awk '{if(NF>4) {print $0}}'`
+- всеки ред, чието последно поле е по-голямо от 4 `~$ cat emp.data | awk '{if($NF>4) {print $0}}'`
+- общия брой полета във всички редове  `~$ cat emp.data | awk 'BEGIN{count = 0} {count+=NF} END{print count}'`
+- броя редове, в които се среща низът Beth `~$ cat emp.data | awk 'BEGIN {count=0} /Beth/ {count+=1} END{print count}'`
+- най-голямото трето поле и редът, който го съдържа  `~$ cat emp.data | awk 'BEGIN{max=0; line=" "} {if($NF>max) {max = $NF; line = $0}} END{print max " " line}'`
+- всеки ред, който има поне едно поле
+- всеки ред, който има повече от 17 знака
+- броя на полетата във всеки ред и самият ред
+- първите две полета от всеки ред, с разменени места
+- всеки ред така, че първите две полета да са с разменени места
+- всеки ред така, че на мястото на първото поле да има номер на реда
+- всеки ред без второто поле
+- за всеки ред, сумата от второ и трето поле
+- сумата на второ и трето поле от всеки ред
+
+
+#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+
+`~$ cat /etc/passwd | cut -c 2-6`
+
+#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+
+`~$ cat /etc/passwd | cut -c 2-6`
+
+#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+
+`~$ cat /etc/passwd | cut -c 2-6`
+
+#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+
+`~$ cat /etc/passwd | cut -c 2-6`
+
 #### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
 
 `~$ cat /etc/passwd | cut -c 2-6`
