@@ -137,25 +137,47 @@ file3:
 52
 
   #### Изведете на екрана:
-	* статистика за броя редове, думи и символи за всеки един файл
-	* статистика за броя редове и символи за всички файлове
-	* общия брой редове на трите файла
+	* статистика за броя редове, думи и символи за всеки един файл  `~$ wc -lwc dir5/file{1,2,3}`
+	* статистика за броя редове и символи за всички файлове `~$ cat dir5/file{1,2,3} | wc -l -c`
+	* общия брой редове на трите файла `~$ cat dir5/file{1,2,3} | wc -l`
 
-`~$ cat /etc/passwd | cut -c 2-6`
+#### Във file2 (inplace) подменете всички малки букви с главни.
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+`~$ cat dir5/file2 | tr a-z A-Z`  - does not change it in file, only prints it differently
+`~$ cat dir5/file2 | tr a-z A-Z >> temp | mv temp dir5/file2`
 
-`~$ cat /etc/passwd | cut -c 2-6`
+#### Във file3 (inplace) изтрийте всички "1"-ци.
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+`~$ cat dir5/file3 | tr -d 1 >> temp | mv temp dir5/file3`
+- if we want to delete the whole row containing '1':
+`~$ sed -i '/1/d' dir5/file3`
 
-`~$ cat /etc/passwd | cut -c 2-6`
+#### Изведете статистика за най-често срещаните символи в трите файла.
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+`~$ cat dir5/file{1,2,3} | uniq -c | sort -n -r`
+- prints the occurrence of each character in each file, then sort it numerically, then in an ascending order
 
-`~$ cat /etc/passwd | cut -c 2-6`
+#### Направете нов файл с име по ваш избор, чието съдържание е конкатенирани съдържанията на file{1,2,3}.
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+`~$ cat dir5/file{1,2,3} >> newFileFromDir5.txt`
+
+#### Прочетете текстов файл file1 и направете всички главни букви малки като запишете резултата във file2.
+
+`~$ cat dir5/file1 | tr A-Z a-z >> dir5/file2`
+
+#### Намерете броя на символите, различни от буквата 'а' във файла /etc/passwd.
+
+`~$ cat /etc/passwd | sed 's/a//g' | wc -c`
+
+#### Намерете броя на уникалните символи, използвани в имената на потребителите от /etc/passwd..
+
+``
+
+#### Отпечатайте всички редове на файла /etc/passwd, които не съдържат символния низ 'ов'..
+
+`~$ cat /etc/passwd | grep -E -v "^.*ов.*$"`
+
+#### Отпечатайте последната цифра на UID на всички редове между 28-ми и 46-ред в /etc/passwd.
 
 `~$ cat /etc/passwd | cut -c 2-6`
 
