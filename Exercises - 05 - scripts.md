@@ -57,11 +57,9 @@
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 read -p "Enter file name and string: " fname str
+  4 cat $fname | grep -q $str
+  5 echo $?
 ```
 #### Имате компилируем (a.k.a няма синтактични грешки) source file на езика C. Напишете shell script, който да покaзва колко е дълбоко най-дълбокото nest-ване (влагане).
 Примерен .c файл:
@@ -84,13 +82,9 @@ int main(int argc, char *argv[]) {
 #### Изход: The deepest nesting is 2 levels
 
 ```shell
-  1 #!/bin/bash
+ 1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 grep -o '[{}]' "${1}" | uniq -c | awk 'BEGIN{max=0; curr=0} $2=="{" {curr = curr+$1} $2=="}" {curr = curr-$1} curr>max {max=curr} END{print max}'
 ```
 
 #### Напишете shell script, който автоматично да попълва файла указател от предната задача по подадени аргументи: име на файла указател, пълно име на човека (това, което очакваме да е в /etc/passwd) и избран за него nickname.
