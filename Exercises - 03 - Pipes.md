@@ -259,24 +259,29 @@ file3:
 
 #### Използвайки файл population.csv, намерете колко е общото население на света през 2008 година. А през 2016?.
 ```shell
-`~$ cat /etc/passwd | cut -c 2-6`
+~$ cat population.csv | grep ,2008, | cut -d ',' -f4 | sed 's/.*/+&/' | xargs | tail -c +2 | bc
+` cat population.csv | awk -F , '{counter+=$NF} END {print counter}'`
 ```
+-not working: `~$ cat population.csv | grep ,2008,| awk '{counter+=$NF} END {print counter}'`
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+#### ИИзползвайки файл population.csv, намерете през коя година в България има най-много население.
 ```shell
-`~$ cat /etc/passwd | cut -c 2-6`
+cat population.csv | grep Bulgaria | sort -nr -t , -k 4 | head -1 | cut -d ',' -f3
 ```
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+#### Използвайки файл population.csv, намерете коя държава има най-много население през 2016. А коя е с най-малко население? (Hint: Погледнете имената на държавите).
 ```shell
-`~$ cat /etc/passwd | cut -c 2-6`
+~$ cat population.csv | grep ,2016, | sort -nr -t , -k 4 | head -1 | awk -F , '{print $1,$2}'
+~$ cat population.csv | grep ,2016, | sort -n -t , -k 4 | head -1 | cut -d ',' -f1 
+~$ cat population.csv | grep ,2016, | awk -F , 'BEGIN{max = 0; name=""} $4<2020{$4=$5; $1=$1+$2} max<$4{max=$4; name=$1} END{print max, name}'
 ```
+-the second one is for least populated in 2016
 
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+#### Използвайки файл population.csv, намерете коя държава е на 42-ро място по население през 1969. Колко е населението й през тази година?.
 ```shell
-`~$ cat /etc/passwd | cut -c 2-6`
+~$ cat population.csv | grep ,1969, | sort -nr -t , -k 4 | head -42| tail -1 | cut -d ',' -f1,4
 ```
-
+- does not cover the countries with "" in their names
 #### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
 ```shell
 `~$ cat /etc/passwd | cut -c 2-6`
