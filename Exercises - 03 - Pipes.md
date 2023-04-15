@@ -275,16 +275,36 @@ cat population.csv | grep Bulgaria | sort -nr -t , -k 4 | head -1 | cut -d ',' -
 ~$ cat population.csv | grep ,2016, | sort -n -t , -k 4 | head -1 | cut -d ',' -f1 
 ~$ cat population.csv | grep ,2016, | awk -F , 'BEGIN{max = 0; name=""} $4<2020{$4=$5; $1=$1+$2} max<$4{max=$4; name=$1} END{print max, name}'
 ```
--the second one is for least populated in 2016
+- the second one is for least populated in 2016
 
 #### Използвайки файл population.csv, намерете коя държава е на 42-ро място по население през 1969. Колко е населението й през тази година?.
 ```shell
 ~$ cat population.csv | grep ,1969, | sort -nr -t , -k 4 | head -42| tail -1 | cut -d ',' -f1,4
 ```
 - does not cover the countries with "" in their names
-#### Изведете съдържанието на файла /etc/passwd от 2-ри до 6-ти символ.
+
+#### Да се разархивира архивът songs.tar.gz в директория songs във вашата home директория. Да се изведат само имената на песните.
 ```shell
-`~$ cat /etc/passwd | cut -c 2-6`
+~$ find ~/songs -mindepth 1 | sed -E 's/.*-(.*)\(.*/\1/g'
+```
+- explanation: replace the following sequence '(random symbol) many times followed by '-' then an atom of random symbol many times, followed by '(' then again random symbol many times with itself'; ! \1 makes a reference to the matched sequence
+
+#### Имената на песните да се направят с малки букви, да се заменят спейсовете с долни черти и да се сортират.
+```shell
+~$ find ~/songs -mindepth 1 | sed -E 's/.*-(.*)\(.*/\1/g' | tr A-Z a-z | tr ' ' '_'
 ```
 
+#### Да се изведат всички албуми, сортирани по година.
+```shell
+~$ find ~/songs -mindepth 1 | awk -F '(' '{print $2}' | awk -F ')' '{print $1}' | sort -n -t , -k2
+```
 
+#### Да се преброят/изведат само песните на Beatles и Pink.
+```shell
+~$ find ~/songs -mindepth 1 | awk -F '/' '{print $6}' | awk -F '-' 'BEGIN{pink=0;bea=0} $1=="Pink Floyd "{pink+=1; print $0} $1=="Beatles "{bea+=1; print $0} END{print "Num Pink: " pink " and num Beatles: " bea}'
+```
+
+#### Да се направят директории с имената на уникалните групи. За улеснение, имената от две думи да се напишат слято:Beatles, PinkFloyd, Madness
+```shell
+~$ find ~/songs -mindepth 1 | awk -F '/' '{print $6}' | awk -F '-' '{print $1}' | sort | uniq | tr -d ' ' | xargs mkdir
+```
