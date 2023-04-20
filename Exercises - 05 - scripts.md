@@ -188,22 +188,69 @@ $ ./nicenumber.sh 7632223 ,
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 number="${1}"
+  4 delum="${2}"
+  5
+  6 if [[ -z "${2}" ]]; then
+  7     delum=' '
+  8 fi
+  9
+ 10 if echo "${number}" | grep -q "^[0-9]+$"; then
+ 11     echo "Number is expected"
+ 12     exit 1
+ 13 fi
+ 14
+ 15 if [[ "${number}" -lt 1000 ]]; then
+ 16     echo "${number}"
+ 17     exit 0
+ 18 fi
+ 19
+ 20 while [[ "${number}" -gt 999 ]]; do
+ 21     outPut=$(echo "${number}" | tail -c 4)$delum$outPut
+ 22     number=$(("${number}"/1000))
+ 23 done
+ 24
+ 25 outPut=$number$delum$outPut
+ 26
+ 27 if [[ "${delum}" != ' ' ]]; then
+ 28     outPut=$(echo "${outPut}"| head -c -2)
+ 29 fi
+ 30
+ 31 echo "${outPut}"
 ```
+
+
 #### Да се напише shell скрипт, който приема файл и директория. Скриптът проверява в подадената директория и нейните под-директории дали съществува копие на подадения файл и отпечатва имената на намерените копия, ако съществуват такива. NB! Под 'копие' разбираме файл със същото съдържание.
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 fname="${1}"
+  4 dirName="${2}"
+  5
+  6 if [[ "${#}" -ne 2 ]]; then
+  7     echo "More args expected"
+  8     exit 1
+  9 fi
+ 10
+ 11 if [[ ! -d "${dirName}" ]]; then
+ 12     echo "Dir name is expected"
+ 13     exit 1
+ 14 fi
+ 15
+ 16 if [[ ! -f "${fname}" ]]; then
+ 17     echo "File name is expected"
+ 18     exit 1
+ 19 fi
+ 20
+ 21 for FILE in $(find "${dirName}" -type f); do
+ 22     if $(test "$(cat "${FILE}")" = "$(cat "${fname}")"); then
+ 23         echo "${FILE}"
+ 25 done
+ 26
+ 27 exit 0
 ```
+
+
 
 #### Да се напише shell script, който генерира HTML таблица съдържаща описание на потребителите във виртуалката ви. Таблицата трябва да има:
 - заглавен ред с имената нa колоните
@@ -242,35 +289,99 @@ $ cat table.html
   7 fi
 ```
 
-#### Да се напише shell скрипт, който получава при стартиране като параметър в командния ред идентификатор на потребител. Скриптът периодично (sleep(1)) да проверява дали потребителят е log-нат, и ако да - да прекратява изпълнението си, извеждайки на стандартния изход подходящо съобщение. NB! Можете да тествате по същият начин като в 05-b-4300.txt
+#### Да се напише shell скрипт, който получава единствен аргумент директория и отпечатва списък с всички файлове и директории в нея (без скритите). До името на всеки файл да седи размера му в байтове, а до името на всяка директория да седи броят на елементите в нея (общ брой на файловете и директориите, без скритите).
+
+a) Добавете параметър -a, който указва на скрипта да проверява и скритите файлове и директории.
+
+Пример:
+$ ./list.sh .
+asdf.txt (250 bytes)
+Documents (15 entries)
+empty (0 entries)
+junk (1 entry)
+karh-pishtov.txt (8995979 bytes)
+scripts (10 entries)
+
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 fname="${1}"
+  4
+  5 if [[ "${#}" -ne 1 ]]; then
+  6     echo "Too much args"
+  7     exit 1
+  8 fi
+  9
+ 10 if [[ ! -d "${fname}" ]]; then
+ 11     echo "That is not a directory"
+ 12     exit 1
+ 13 fi
+ 14
+ 15 for FILE in $(find "${fname}"); do
+ 16     if [[ -d "${FILE}" ]]; then
+ 17         numFiles=$(find "${FILE}" -mindepth 1 | wc -l)
+ 18         echo "${FILE} has "${numFiles}" entries in it"
+ 19     else
+ 20         numBytes=$(echo "${FILE}" | wc -m)
+ 21         echo "${FILE} is "${numBytes}" bytes"
+ 22     fi
+ 23 done
+ 24
+ 25 exit
+
 ```
 
-#### Да се напише shell скрипт, който получава при стартиране като параметър в командния ред идентификатор на потребител. Скриптът периодично (sleep(1)) да проверява дали потребителят е log-нат, и ако да - да прекратява изпълнението си, извеждайки на стандартния изход подходящо съобщение. NB! Можете да тествате по същият начин като в 05-b-4300.txt
+#### 7000 Да се напише shell скрипт, който приема произволен брой аргументи - имена на файлове. Скриптът да прочита от стандартния вход символен низ и за всеки от зададените файлове извежда по подходящ начин на стандартния изход броя на редовете, които съдържат низа. NB! Низът може да съдържа интервал.
+
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 read -p "Input string to search for: " str
+  4
+  5 if [[ "${#}" -lt 1 ]]; then
+  6     echo "You have not written down any files to search in!"
+  7     exit 1
+  8 fi
+  9
+ 10 for FILE in "${@}"; do
+ 11     if [[ ! -f "${FILE}" ]]; then
+ 12         echo "That is not a normal file!"
+ 13         exit 1
+ 14     else
+ 15         numLines=$(grep "${str}" "${FILE}" | wc -l)
+ 16         echo "Num row containing the str: "${numLines}""
+ 17     fi
+ 18 done
+ 19 exit 0
+
 ```
 
-#### Да се напише shell скрипт, който получава при стартиране като параметър в командния ред идентификатор на потребител. Скриптът периодично (sleep(1)) да проверява дали потребителят е log-нат, и ако да - да прекратява изпълнението си, извеждайки на стандартния изход подходящо съобщение. NB! Можете да тествате по същият начин като в 05-b-4300.txt
+#### 7200 Да се напише shell скрипт, който приема произволен брой аргументи - имена на файлове или директории. Скриптът да извежда за всеки аргумент подходящо съобщение: - дали е файл, който може да прочетем; - ако е директория - имената на файловете в нея, които имат размер, по-малък от броя на файловете в директорията.
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 if [[ "${#}" -lt 1 ]]; then
+  4     echo "You have not written down any files!"
+  5     exit 1
+  6 fi
+  7
+  8 for FILE in "${@}"; do
+  9     if [[ -d "${FILE}" ]]; then
+ 10         numFiles=$(find "${FILE}" -maxdepth 1 | wc -l)
+ 11         #echo "Num files in dir: "${numFiles}""
+ 12         for ddFile in $(find "${FILE}" -mindepth 1 -type f); do
+ 13             fileSize=$(stat -c '%s' "${ddFile}")
+ 14             #echo "File size is: "${fileSize}""
+ 15             if [[ "${numFiles}" -gt "${fileSize}" ]]; then
+ 16                 echo "${ddFile}"
+ 17             fi
+ 18         done
+ 19     else
+ 20         if [[ -r "${FILE}" ]]; then
+ 21             echo " "${FILE}" - Yep, it is a file you can read"
+ 22         fi
+ 23     fi
+ 24 done
+ 25 exit 0
+
 ```
