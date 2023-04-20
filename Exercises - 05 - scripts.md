@@ -107,11 +107,22 @@ uncleBen <username на Ben Dover в os-server>
 ```shell
   1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 sourceD="${1}"
+  4 destD="${2}"
+  5
+  6 if [[ -z "${destD}" ]]; then
+  7     destD="$(date +'%Y-%m-%d')"
+  8     mkdir -p "${destD}"
+  9 fi
+ 10
+ 11 if [[ ! -d "${sourceD}" ]]; then
+ 12     echo "Invalid source name!"
+ 13 fi
+ 14
+ 15 for FILE in $(find "${sourceD}" -maxdepth 1 -mindepth 1 -type f -mmin -45);     do
+ 16     cp "${FILE}" "${destD}"
+ 17 done
+
 ```
 
 #### Да се напише shell скрипт, който получава при стартиране като параметър в командния ред идентификатор на потребител. Скриптът периодично (sleep(1)) да проверява дали потребителят е log-нат, и ако да - да прекратява изпълнението си, извеждайки на стандартния изход подходящо съобщение. NB! Можете да тествате по същият начин като в 05-b-4300.txt
@@ -136,13 +147,32 @@ uncleBen <username на Ben Dover в os-server>
 1
 
 ```shell
-  1 #!/bin/bash
+1 #!/bin/bash
   2
-  3 if echo "${1}" | grep -Eq '^[a-z0-9]*$'; then
-  4     echo "true"
-  5 else
-  6     echo "false"
-  7 fi
+  3 num="${1}"
+  4 leftB="${2}"
+  5 rightB="${3}"
+  6
+  7 if [[ "${#}" -ne 3 ]]; then
+  8     echo "Invalid input! Not enough arguments!"
+  9 fi
+ 10
+ 11 for symb in "${@}"; do
+ 12     if echo "${symb}" | grep -E -q -v '^[+-]?[0-9]+$'; then
+ 13         exit 3
+ 14     fi
+ 15 done
+ 16
+ 17 if [[ "${leftB}" -gt "${rightB}" ]]; then
+ 18     exit 2
+ 19 fi
+ 20
+ 21 if [[ "${num}" -ge "${leftB}" ]] && [[ "${num}" -le "${rightB}" ]]; then
+ 22     exit 0
+ 23 fi
+ 24 
+ 25 exit 1
+
 ```
 
 
