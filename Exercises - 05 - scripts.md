@@ -2,7 +2,7 @@
 ```shell
   1 #!/bin/bash
   2
-  3 read -p "What is your naem: " name
+  3 read -p "What is your name: " name
   4 echo "Hello, ${name}"
 ```
 
