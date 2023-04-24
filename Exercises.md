@@ -189,3 +189,127 @@ exit 0
  13 ps aux --sort=user | head -n -2 | awk 'BEGIN{curr="";name=$1;sum=0} {curr=$1    } name==curr{sum+=$6} name!=curr{print name" "sum; sum=0; name=curr}'
  14 exit 0
 ````
+#### 27)
+
+````shell
+ 1 #!/bin/bash
+  2
+  3 if [[ "${#}" -gt 2  ]]; then
+  4     echo "Too much args"
+  5     exit 1
+  6 fi
+  7
+  8 if [[ "${#}" -lt 0 ]]; then
+  9     echo "Not enough args"
+ 10     exit 1
+ 11 fi
+ 12
+ 13 if [[ ! -d "${1}" ]]; then
+ 14     echo "Not a directory"
+ 15     exit 1
+ 16 fi
+ 17
+ 18
+ 19 NUMBROKEN=$(find "${1}" -mindepth 1 -type l 2>/dev/null -exec [ ! -e {} ] \;     | wc -l)
+ 20 OUTPUT=$(find "${1}" -mindepth 1 -type l 2>/dev/null -exec [ -e {} ] \; -pri    ntf "%f %l\n" | sed 's/ / -> /g')
+ 21
+ 22 if [[ "${#}" -eq 2 ]]; then
+ 23     echo "${OUTPUT}" >> "${2}"
+ 24     echo "Num of broken symlinks: ${NUMBROKEN}" >> "${2}"
+ 25 else
+ 26     echo "${OUTPUT}"
+ 27     echo "Num of broken symlinks: ${NUMBROKEN}"
+ 28 fi
+ 29
+ 30 exit 0
+
+````
+
+#### 28)
+
+````shell
+  1 #!/bin/bash
+  2
+  3 if [[ "${#}" -ne 2 ]]; then
+  4     echo "Not right number of args"
+  5     exit 1
+  6 fi
+  7
+  8 if [[ ! -d "${1}" ]]; then
+  9     echo "Not a directory"
+ 10     exit 1
+ 11 fi
+ 12
+ 13 CONSTSTR="vmlinuz"
+ 14 echo $(find "${1}" -mindepth 1 -maxdepth 1 -type f | grep -E "${CONSTSTR}-[0    -9]+.[0-9]+.[0-9]+-${2}$" | awk -F '.' 'BEGIN{max=0;line=""} max<$2{max=$2;     line=$0} END{print line}')
+ 15
+ 16
+ 17 exit 0
+````
+
+#### 29)
+
+````shell
+  1 #!/bin/bash
+  2
+  3 if [[ $(whoami) != "s0600078" ]]; then
+  4     echo "Sorry, you are not roor. Cannot run it"
+  5     exit 1
+  6 fi
+  7
+  8 rootProcesses=$(ps aux | tail -n +2 | grep "root" | awk 'BEGIN{sum=0} {sum+=    $6} END{print sum}')
+  9
+ 10 usersNotRoot=$(ps aux --sort=user | tail -n +2 | cut -d ' ' -f1 | grep -v 'r    oot' | sort -d | uniq)
+ 11
+ 12 for USER in $usersNotRoot; do
+ 13      userDir=$(cat /etc/passwd | grep "${USER}" | cut -d ':' -f6)
+ 14      if [[ ! -d $userDir  ||  $(stat -c "%U" "${userDir}" 2>/dev/null) != "$    {USER}" ||  $(stat -c "%A" "${userDir}" 2>/dev/null | head -c 3 | tail -c 1)     != 'w' ]]; then
+ 15          echo "${USER}"
+ 16          userRSS=$(ps aux | grep "${USER}" | awk 'BEGIN{sum=0} {sum+=$6} END    {print sum}')
+ 17          if [[ "${userRSS}" -gt "${rootProcesses}" ]]; then
+ 18                   echo "Yes, it is greater than root's"
+ 19             ps -e -u $USER -o pid= | xargs -I {} echo "These are for killing {}"
+ 20          fi
+ 21     fi
+ 22 done
+ 23
+ 24 exit 0
+````
+
+#### 30)
+
+````shell
+  1 #!/bin/bash
+  2
+  3 if [[ "${#}" -ne 1 ]]; then
+  4     echo "Sorry, invalid number of args"
+  5     exit 1
+  6 fi:
+  7
+  8 if [[ ! -d "${1}" ]]; then
+  9     echo "Not directory"
+ 10     exit 1
+ 11 fi
+ 12
+ 13 dirsToSearch=$(find "${1}" -mindepth 1 -type f -printf "%p\n" | cut -d '/' -    f5 | sort | uniq)
+ 14
+ 15 OUTPUT=""
+ 16 touch out.txt
+ 17 for fr in $dirsToSearch; do
+ 18     numLines=$(find "${1}" -mindepth 1 -type f -printf "%p\n" | grep $fr | x    args -I {} cat {} | wc -l)
+ 19     echo "${fr} ${numLines} " >> out.txt
+ 20 done
+ 21
+ 22 echo "${OUTPUT}"
+ 23 cat out.txt | sort -nr -t' ' -k2 | head
+ 24
+ 25
+ 26 exit 0
+ 27
+````
+
+#### 31)
+
+````shell
+
+````
