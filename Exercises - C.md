@@ -32,7 +32,7 @@ int main (int argc, char** argv) {
      err(4, "Error while trying to seek");
   }
   for (int temp  = 0; temp < 256; temp++){
-          uint8_t c = temp;
+     uint8_t c = temp;
      for (int j = 0; j < bytes[temp]; j++){
         if (write(fd, &c, sizeof(c)) < 0){
            err(5, "Error while trying to write to file %s", argv[1]);
