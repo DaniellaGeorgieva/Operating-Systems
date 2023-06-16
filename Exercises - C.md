@@ -110,5 +110,112 @@ int main(int argc, char **argv)
 
     exit(0);
 }
+````
+
+### 61) 2017-IN-01
+````C
+
+#include "err.h"
+#include "fcntl.h"
+#include "stdint.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/stat.h"
+
+int openFileRead(const char* name);
+
+struct pos {
+   uint16_t offset;
+   uint8_t len;
+   uint8_t nouse;
+};
+
+int openFileRead(const char* name) {
+   int fd;
+   if ((fd = open(name, O_RDONLY)) < 0) {
+      err(2, "Error trying to open file %s", name);
+   }
+   return fd;
+}
+
+int main (int argc, char **argv) {
+   if (argc != 5) {
+      errx(1, "Invalid number of arguments");
+   }
+
+    int fd1 = openFileRead(argv[1]);
+    int fd11 = openFileRead(argv[2]);
+
+    struct stat s;
+    if ((fstat(fd11, &s)) < 0){
+       err(3, "Error trying to obtain stats about file %s", argv[2]);
+    }
+
+    if (s.st_size % 4 != 0) {
+       errx(4, "Invalid second file size! It must be devisable by 4");
+    }
+
+    struct stat s2;
+    if((fstat(fd1, &s2)) < 0) {
+       err(3, "Error trying to obtain stats about file %s", argv[2]);
+    }
+
+    int fd2;
+    int fd22;
+
+    if ((fd2 = open(argv[3], O_WRONLY | O_CREAT, S_IRWXU)) < 0) {
+        err(2, "Error trying to open file %s", argv[3]);
+    }
+
+    if ((fd22 = open(argv[4], O_WRONLY | O_CREAT, S_IRWXU)) < 0) {
+        err(2, "Error trying to open file %s", argv[4]);
+    }
+
+
+   struct pos infoF11;
+   int bytes_read;
+   uint16_t offc = 0;
+   while ((bytes_read = read(fd11, &infoF11, sizeof(infoF11))) == sizeof(infoF11)) {
+     if (infoF11.offset + infoF11.len > s2.st_size) {
+        errx(4, "Invalid size of file %s", argv[1]);
+     }
+     if ((lseek (fd1, infoF11.offset, SEEK_SET)) < 0) {
+       err(5, "Error trying to lseek in file %s", argv[1]);
+     }
+     uint8_t buff;
+
+     if((read(fd1, &buff, sizeof(buff))) < 0) {
+        err(6, "Error trying to read from file %s", argv[1]);
+     }
+     if (buff < 0x41 || buff > 0x5A) {
+        continue;
+     }
+     struct pos out = {offc, infoF11.len, 0};
+     if ((write(fd22, &out, sizeof(out))) < 0) {
+       err(7, "Error trying to write in a file %s", argv[4]);
+     }
+
+     for (int i = 1; i < infoF11.len - 1; i++){
+         if((read(fd1, &buff, sizeof(buff))) < 0) {
+           err(6, "Error trying to read from file %s", argv[1]);
+         }
+
+         if ((write(fd2, &buff, sizeof(buff))) < 0) {
+            err(7, "Error trying to write in file %s", argv[3]);
+         }
+     }
+     offc += infoF11.len;
+   }
+
+   if (bytes_read < 0) {
+      err(6, "Error trying to read from file %s", argv[2]);
+   }
+   close(fd1);
+   close(fd11);
+   close(fd2);
+   close(fd22);
+   exit(0);
+}
+
 
 ````
