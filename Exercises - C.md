@@ -353,3 +353,100 @@ int main (int argc, char **argv) {
 }
 
 ````
+
+### 82) 2017-IN-01 
+````C
+#include "fcntl.h"
+#include "unistd.h"
+#include "stdlib.h"
+#include "err.h"
+#include "sys/wait.h"
+
+int main (void) {
+   int a[2];
+
+   if ((pipe(a)) == -1){
+      err(1, "Error with first pipe");
+   }
+   pid_t pd = fork();
+   if (pd == -1) {
+      err(2, "Error trying to fork");
+   }
+
+   if (pd == 0) {
+      close(a[0]);
+      if ((dup2(a[1], 1)) == -1) {
+         err(3, "Error trying to dup");
+      }
+      if((execlp("cut", "cut", "-d:", "-f7", "/etc/passwd", (char*)NULL)) == -1){
+        err(4, "Error trying to exec cut command");
+      }
+   }
+   else {
+      close(a[1]);
+   }
+
+   int b[2];
+   if ((pipe(b)) == -1) {
+      err(1, "Error with second pipe");
+   }
+   if ((pd = fork()) == -1 ) {
+      err(2, "Error with second fork");
+   }
+   if(pd == 0) {
+      close(b[0]);
+      if ((dup2(a[0], 0)) == -1) {
+         err(3, "Error trying to dup");
+      }
+      if ((dup2(b[1], 1)) == -1) {
+         err(3, "Error trying to dup");
+      }
+      if (execlp("sort", "sort", (char*)NULL) == -1) {
+         err(4, "Error trying to exec sort");
+      }
+   }
+   else{
+      close(b[1]);
+   }
+
+   int c[2];
+
+   if ((pipe(c)) == -1){
+      err(1, "Error with third pipe");
+   }
+
+   if ((pd = fork()) == -1) {
+      err(2, "Error with fork");
+   }
+   if (pd == 0) {
+      close(c[0]);
+      if ((dup2(b[0], 0)) == -1){
+        err(3, "Error with dup");
+      }
+      if ((dup2(c[1], 1)) == -1) {
+        err(3, "Error with dup");
+      }
+
+      if (execlp("uniq", "uniq", "-c", (char*)NULL) == -1) {
+        err(4, "Error trying to exec uniq");
+      }
+   }
+   else {
+      close(c[1]);
+   }
+   close(a[0]);
+   close(b[0]);
+
+   while(wait(NULL) > 0);
+   if((dup2(c[0], 0)) == -1) {
+      err(3, "Error with dup");
+   }
+   if (execlp("sort", "sort", "-n", "-k1", (char*)NULL) == -1) {
+      err(4, "Error trying to exec second sort");
+   }
+   close(c[0]);
+
+   exit(0);
+}
+
+````
