@@ -220,5 +220,74 @@ int main (int argc, char **argv) {
 
 ### 63) 2017-SE-02
 ````C
+#include "fcntl.h"
+#include "err.h"
+#include "unistd.h"
+#include "stdint.h"
+#include "stdlib.h"
+#include "string.h"
+
+void readAndCat(int fd, uint8_t flag);
+void readAndCat(int fd, uint8_t flag) {
+        int bytes_count = 0;
+        uint8_t lines = 0;
+
+        uint8_t symbol;
+        if (flag == 0) {
+                while ((bytes_count = read(fd, &symbol, sizeof(symbol))) > 0){
+             if((write(1, &symbol, sizeof(symbol))) < 0) {
+                err(1, "Error trying to write on the stdout");
+             }
+                }
+                if(bytes_count < 0) {
+            err(2, "Error trying to read from file with descriptor %d",fd);
+                }
+        }
+        else if (flag == 1) {
+                lines++;
+                if ((write(1, &lines, sizeof(lines))) < 0) {
+           err(1, "Error trying to write on the stdout");
+                }
+       while ((bytes_count = read (fd, &symbol, sizeof(symbol))) > 0) {
+           if ((write(1, &symbol, sizeof(symbol))) < 0) {
+               err(1, "Error trying to write on the stdout");
+           }
+           if (symbol == '\n'){
+                   if ((write(1, &lines, sizeof(lines))) < 0) {
+                  err(1, "Error trying to write on the stdout");
+                   }
+               lines += 1;
+           }
+       }
+       if (bytes_count < 0) {
+          err(2, "Error trying to read from a file with descriptor %d", fd);
+       }
+        }
+}
+int main (int argc, char **argv) {
+   uint8_t flag = 0;
+   if (argc == 1) {
+      readAndCat(0, 0);
+   }
+   else if (argc > 1) {
+     if (strcmp(argv[1], "-n") == 0) {
+        flag = 1;
+        if (argc == 2) {
+           readAndCat(0, 1);
+        }
+     }
+     int fd = 0;
+     for (int i = 1 + flag; i < argc; i++) {
+         if (strcmp(argv[i], "-") != 0) {
+            if ((fd = open(argv[i], O_RDONLY)) < 0) {
+               err(3, "Error trying to open file %s", argv[i]);
+            }
+         }
+                 readAndCat(fd, flag);
+     }
+    close(fd);
+   }
+  exit(0);
+}
 
 ````
