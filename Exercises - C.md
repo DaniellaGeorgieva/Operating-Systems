@@ -291,3 +291,65 @@ int main (int argc, char **argv) {
 }
 
 ````
+
+
+### 80) 2016-SE-01 
+````C
+#include "fcntl.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "err.h"
+#include "sys/wait.h"
+int main (int argc, char **argv) {
+    if (argc != 2) {
+       errx(1, "Invalid number of arguments");
+    }
+
+    int pipefd[2];
+    if ((pipe(pipefd)) == -1) {
+        err(2, "Error trying to create a pipe");
+    }
+    pid_t ch = fork();
+    if (ch == -1) {
+        err(3, "Error trying to fork process");
+    }
+
+    if (ch == 0) {
+       close(pipefd[0]);
+       if ((dup2(pipefd[1], 1)) == -1) {
+          err(4, "Error trying to dup2, to replace stdout by write end of pipe");
+          close(pipefd[1]);
+       }
+       if((execlp("cat", "cat", argv[1], (char*)NULL)) == -1) {
+          err(5, "Error while trying to exec cat command");
+       }
+    }
+
+    int status;
+    close(pipefd[1]); // close write end
+    if ((wait(&status)) == -1) {
+       close(pipefd[0]);
+       err(6, "Ërror trying to wait for a child process");
+    }
+
+    if (!WIFEXITED(status)){
+       close(pipefd[0]);
+       errx(7, "Error, child process did not exit normally");
+    }
+
+    if (WEXITSTATUS(status) != 0) {
+       close(pipefd[0]);
+       errx(8, "Error, child process did not exit with status 0");
+    }
+
+    if ((dup2(pipefd[0], 0)) == -1) {
+       err(4, "Error while trying to dup, to replace stdin by read end of pipe");
+    }
+
+    if ((execlp("sort", "sort", (char*)NULL)) == -1) {
+       err(5, "Error trying to perform exec");
+    }
+        exit(0);
+}
+
+````
