@@ -253,9 +253,9 @@ void readAndCat(int fd, uint8_t flag) {
                err(1, "Error trying to write on the stdout");
            }
            if (symbol == '\n'){
-                   if ((write(1, &lines, sizeof(lines))) < 0) {
+              if ((write(1, &lines, sizeof(lines))) < 0) { //does not write the nums on the stdout, if dprintf used - it works
                   err(1, "Error trying to write on the stdout");
-                   }
+              }
                lines += 1;
            }
        }
