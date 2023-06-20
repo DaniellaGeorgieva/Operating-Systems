@@ -452,5 +452,147 @@ int main (void) {
 ````
 ### 78) 2022-SE-01
 ````C
+#include "err.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "fcntl.h"
+#include "sys/stat.h"
+#include "stdint.h"
+int open_safe(char* fname, int flags, mode_t mode);
+struct compHeader {
+    uint32_t magic1;
+    uint16_t magic2;
+    uint16_t reserved;
+    uint64_t count;
+};
+
+struct compData {
+    uint16_t type;
+    uint16_t reserved;
+    uint16_t reserved1;
+    uint16_t reserved2;
+    uint32_t offset1;
+    uint32_t offset2;
+};
+
+struct dataHeader {
+    uint32_t magic;
+    uint32_t count;
+};
+
+int open_safe (char* fname, int flags, mode_t mode) {
+    int fd;
+    if((fd = open(fname, flags, mode)) == -1) {
+       err(2, "Error while opening file %s", fname);
+    }
+    return fd;
+}
+int main (int argc, char **argv) {
+    if (argc != 3) {
+       errx(1, "Invalid number of arguments");
+    }
+    struct stat st1;
+
+    int fd1 = open_safe(argv[1], O_RDWR, S_IRWXU);
+    int fd2 = open_safe(argv[2], O_RDONLY, S_IRWXU);
+
+        if ((fstat(fd1, &st1)) < 0) {
+        err(8, "Error while fstat in file %s", argv[1]);
+        }
+
+        if (st1.st_size % 8 != 0) {
+       errx(9, "Invalid first file size %s", argv[1]);
+        }
+
+        struct stat st2;
+        if ((fstat(fd2, &st2)) < 0) {
+        err(8, "Error while fstat in file %s", argv[2]);
+        }
+
+        if (st2.st_size % 16 != 0) {
+        errx(9, "Invalid second file size %s", argv[1]);
+        }
+
+        int bytes_count;
+
+        struct dataHeader dH;
+        if ((read(fd1, &dH, sizeof(dH))) < 0 ) {
+        err(2, "Error while reading header from file %s", argv[1]);
+        }
+
+        struct compHeader cH;
+        if ((read(fd2, &cH, sizeof(cH))) < 0) {
+        err(3, "Error while reading header from file %s", argv[2]);
+        }
+
+        if ((st1.st_size - 8)/8 != dH.count ) {
+        errx(11, "Count of numbers in header does not match the actual number of elements in the file %s", argv[1]);
+        }
+
+        if ((st2.st_size - 16)/8 != cH.count ) {
+        errx(11, "Count of numbers in header does not match the actual number of elements in the file %s", argv[1]);
+        }
+        struct compData cD;
+        while ((bytes_count = read(fd2, &cD, sizeof(cD))) > 0) {
+        if ((lseek(fd1,8*(2 + cD.offset1),SEEK_SET)) < 0) {
+            err(6, "Error while lseek");
+        }
+        uint64_t num1;
+        if ((read(fd1, &num1, sizeof(num1))) < 0) {
+           err(7, "Error reading number one");
+        }
+        if ((lseek(fd1, 8*(cD.offset2 - cD.offset1), SEEK_CUR)) < 0) {
+            err(6, "Error while lseek");
+        }
+        uint64_t num2;
+        if ((read(fd1, &num2, sizeof(num2))) < 0) {
+            err(7, "Error while reading number two");
+        }
+        if (cD.type == 0) {
+            if (num1 <= num2) {
+                continue;
+            }
+            else {
+                if((write(fd1, &num1, sizeof(num1))) < 0) {
+                   err(10, "Error while writing to file %s", argv[1]);
+                }
+                if((lseek(fd1, -8*(cD.offset2 - cD.offset1), SEEK_CUR)) < 0) {
+                   err(6, "Error while lseek");
+                }
+                if((write(fd1, &num2, sizeof(num2))) < 0) {
+                   err(10, "Error while writing to file %s", argv[1]);
+                }
+            }
+        }
+        else if (cD.type == 1) {
+            if (num1 >= num2) {
+               continue;
+            }
+            else {
+                if((write(fd1, &num1, sizeof(num1))) < 0) {
+                   err(10, "Error while writing to file %s", argv[1]);
+                }
+                if((lseek(fd1, -8*(cD.offset2 - cD.offset1), SEEK_CUR)) < 0) {
+                   err(6, "Error while lseek");
+                }
+                if((write(fd1, &num2, sizeof(num2))) < 0) {
+                   err(10, "Error while writing to file %s", argv[1]);
+                }
+                        }
+        }
+        else {
+            errx(5, "Invalid type value");
+        }
+    }
+
+        if (bytes_count < 0) {
+        err(4, "Error while reading data from file %s", argv[2]);
+        }
+
+
+    close(fd1);
+    close(fd2);
+        exit(0);
+}
 
 ````
