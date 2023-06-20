@@ -599,5 +599,79 @@ int main (int argc, char **argv) {
 
 ### 62) 2017-SE-01
 ````C
+#include "fcntl.h"
+#include "err.h"
+#include "unistd.h"
+#include "sys/stat.h"
+#include "stdlib.h"
+#include "stdint.h"
+struct patch {
+    uint16_t offset;
+    uint8_t pos1;
+    uint8_t pos2;
+};
+
+int main (int argc, char** argv) {
+
+        if(argc != 4) {
+       errx(1, "Invalid number of arguments");
+        }
+
+        int fd1 = open (argv[1], O_RDONLY);
+        if (fd1 < 0) {
+       err(2, "Error opening file %s", argv[1]);
+        }
+        int fd2 = open (argv[2], O_RDONLY);
+        if (fd2 < 0) {
+       err(2, "Error opening file %s", argv[2]);
+        }
+
+        int fd3 = open (argv[3], O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+        if (fd3 < 0) {
+       err(3, "Error while opening file %s", argv[3]);
+        }
+
+    struct stat st1;
+    struct stat st2;
+
+    if ((fstat(fd1, &st1)) < 0 ) {
+       err(6, "Error while fstat");
+    }
+    if ((fstat(fd2, &st2)) < 0) {
+       err(6, "Error while fstat");
+    }
+    if (st1.st_size != st2.st_size) {
+       errx(7, "Size of files does not match");
+    }
+        uint8_t original;
+        int bytes_count;
+        uint16_t offset = 0;
+        while((bytes_count = read(fd1, &original, sizeof(original))) > 0) {
+         uint8_t newOne;
+         if((read(fd2, &newOne, sizeof(newOne))) < 0) {
+            err(5, "Error while reading from file %s", argv[2]);
+         }
+
+         if(original != newOne){
+            struct patch ph;
+            ph.offset = offset;
+            ph.pos1 = original;
+            ph.pos2 = newOne;
+            if ((write(fd3, &ph, sizeof(ph))) < 0) {
+               err(8, "Error while writing to file %s", argv[3]);
+            }
+         }
+        }
+        if (bytes_count < 0) {
+       err(4, "Error while reading from file %s", argv[1]);
+        }
+
+close(fd1);
+close(fd2);
+close(fd3);
+
+exit(0);
+
+}
 
 ````
