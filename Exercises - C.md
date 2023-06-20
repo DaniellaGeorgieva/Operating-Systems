@@ -675,3 +675,95 @@ exit(0);
 }
 
 ````
+
+### 64) 2017-SE-03 
+````C
+#include "err.h"
+#include "unistd.h"
+#include "stdlib.h"
+#include "stdint.h"
+#include "fcntl.h"
+#include "sys/stat.h"
+
+
+struct patch {
+   uint16_t offset;
+   uint8_t b1;
+   uint8_t b2;
+}__attribute__((packed));
+
+int main (int argc, char** argv) {
+
+        if(argc != 4)
+        {
+                errx(1, "Invalid number of arguments");
+        }
+
+        int fd1;
+        int fd2;
+        int fd3;
+
+        if ((fd1 = open(argv[1], O_RDONLY )) < 0) {
+       err(2, "Error while opening file %s", argv[1]);
+        }
+        if ((fd2 = open(argv[2], O_RDONLY)) < 0) {
+       err(2, "Error while opening file %s", argv[2]);
+        }
+        if ((fd3 = open(argv[3], O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU)) < 0) {
+       err(2, "Error while opening file %s", argv[3]);
+        }
+
+  struct stat stf1;
+  if((fstat(fd2, &stf1)) < 0) {
+       err(3, "Error while fstat");
+  }
+
+  int size = stf1.st_size;
+  int bytes_count;
+  uint8_t curr;
+  while((bytes_count = read(fd2, &curr, sizeof(curr))) > 0) {
+        if((write(fd3, &curr, sizeof(curr))) < 0) {
+           err(5, "Error while writing to file %s", argv[3]);
+        }
+  }
+
+        struct patch ph;
+
+        uint16_t offset = 0;
+  while ((bytes_count = read(fd1, &ph, sizeof(ph))) > 0) {
+       if (ph.offset > size) {
+           errx(4, "Invalid offset");
+       }
+       uint8_t newOne;
+       if (ph.offset == offset) {
+           newOne = ph.b2;
+           uint8_t oldOne;
+
+           if((lseek(fd2, offset, SEEK_SET)) < 0) {
+              err(7, "Error while lseek");
+           }
+           if((read(fd2, &oldOne, sizeof(oldOne))) < 0) {
+              err(9, "Error while reading from file %s", argv[2]);
+           }
+
+           if(oldOne != ph.b1) {
+              errx(10, "Non-existing original byte of patch in file");
+           }
+
+           if((lseek(fd3, offset, SEEK_SET)) < 0) {
+              err(7, "Error while lseek");
+           }
+           if((write(fd3, &newOne, sizeof(newOne))) < 0) {
+              err(8, "Error while writing to file %s", argv[3]);
+           }
+        }
+           offset++;
+
+     }
+        close(fd1);
+        close(fd2);
+        close(fd3);
+        exit(0);
+}
+
+````
