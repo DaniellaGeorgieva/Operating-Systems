@@ -1084,3 +1084,94 @@ int main (int argc, char** argv) {
 }
 
 ````
+### 88) 2020SE-03
+````C
+#include "err.h"
+#include "fcntl.h"
+#include "unistd.h"
+#include "stdlib.h"
+#include "sys/wait.h"
+#include "stdint.h"
+#include "string.h"
+#include "sys/stat.h"
+#include "stdio.h"
+struct t {
+        char name[8];
+        uint32_t offset;
+        uint32_t length;
+}__attribute__((packed));
+
+int main(int argc, char** argv) {
+
+        if(argc != 2) {
+       errx(1, "Invalid number of arguments");
+        }
+
+        int fd = open(argv[1], O_RDONLY);
+        if (fd < 0) {
+       err(2, "Error while opening file %s",argv[1]);
+        }
+
+        struct stat s;
+        if ((fstat(fd, &s)) < 0) {
+       err(3, "Error while fstat");
+        }
+
+        if (s.st_size % sizeof(struct t) != 0) {
+       errx(4, "Invalid file size");
+        }
+        struct t tt;
+        int p[2];
+        if ((pipe(p)) == -1) {
+         err(6, "Error while piping");
+        }
+        int bytes_read;
+        while ((bytes_read = read(fd, &tt, sizeof(tt))) > 0) {
+                int fdt;
+                if((fdt = open(tt.name, O_RDONLY)) < 0) {
+           err(8, "Error while opening file %s", tt.name);
+                }
+                uint16_t a = 0x00;
+                uint16_t buff;
+        pid_t pid = fork();
+                if (pid == -1) {
+                        err(7, "Error while forking");
+                }
+                if (pid == 0) {
+                        close(p[0]);
+                                if ((lseek(fdt, tt.offset*2, SEEK_SET)) > 0) {
+                                        err(9, "Error while lseek");
+                                }
+                        for (uint32_t i = 0; i < tt.length && sizeof(buff) > 0; i++) {
+                                if ((read(fdt, &buff, sizeof(buff))) < 0) {
+                                        err(10, "Error while trying to read from file %s", tt.name);
+                                }
+                                a = a^buff;
+                        }
+                        if((write(p[1], &a, sizeof(a))) <0) {
+                                err(11, "Error while writing to pipe");
+                        }
+                        close(p[1]);
+                }
+        }
+
+        uint16_t aa = 0x00;
+        uint16_t buff2;
+                close(p[1]);
+                int bytes;
+                while((bytes = read(p[0], &buff2, sizeof(buff2))) > 0) {
+                        aa = aa ^ buff2;
+                }
+                if (bytes < 0){
+                        err(12, "Error while reaing from pipe");
+                }
+                close(p[0]);
+
+        if (bytes_read < 0 ) {
+                err(5, "Error while reading from file %s", argv[1]);
+        }
+
+        dprintf(1, "%d", aa);
+        exit(0);
+}
+````
