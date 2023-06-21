@@ -921,5 +921,59 @@ int main (int argc, char** argv) {
         exit(0);
 }
 
+````
+### 81) 2016-SE-02
+````C
+#include "stdlib.h"
+#include "fcntl.h"
+#include "unistd.h"
+#include "err.h"
+#include "sys/wait.h"
+#include "string.h"
+int main (void) {
+
+        char prompt[16] = "Enter command: ";
+
+        if((write(1, &prompt, sizeof(prompt))) < 0) {
+        err(1, "Error while writing to stdout");
+        }
+
+        char command[20];
+        char c;
+        int bytes_read;
+        int idx = 0;
+        while((bytes_read = read(0, &c, sizeof(c))) > 0) {
+        command[idx] = c;
+        idx++;
+        }
+        if (bytes_read < 0) {
+       err(2,"Error while reading from stdout");
+        }
+        if(strcmp(command, "exit") == 0){
+        exit(0);
+        }
+
+        pid_t pid = fork();
+        if (pid == -1) {
+        err(3, "Error while forking");
+        }
+        if (pid == 0) {
+       if((execlp(command, command, (char*)NULL)) < 0) {
+          err(4, "Error while executing");
+       }
+        }
+        int status;
+        if((wait(&status)) < 0) {
+        err(5, "Error waiting for child to finish");
+        }
+        if (!WIFEXITED(status)){
+        errx(6, "Child did not terminate normally");
+        }
+        if (WEXITSTATUS(status) != 0) {
+       errx(7, "Child finished with exit status not 0");
+        }
+        exit(0);
+}
+
 
 ````
