@@ -855,3 +855,71 @@ int main (int argc, char** argv) {
 }
 
 ````
+### 82) 2017-IN-02
+````C
+#include "err.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "fcntl.h"
+#include "string.h"
+#include "sys/wait.h"
+int main (int argc, char** argv) {
+
+        if (argc > 2) {
+       errx(1, "Invalid number of arguments");
+        }
+
+        char command[100];
+
+        if(argc == 1) {
+       stpcpy(command, "echo");
+        }
+        else if (argc == 2) {
+       stpcpy(command, argv[1]);
+        }
+
+        if(strlen(command) > 4) {
+       errx(2, "Invalid argument str size");
+        }
+
+        char buff[100];
+        char c;
+        int bytes_read = 0;
+        int index = 0;
+        while((bytes_read = read(0, &c, sizeof(c))) > 0) {
+       if(c == '\n' || c == ' ' || c == '\t'){
+           buff[index] = '\0';
+           index = 0;
+           if (strlen(buff) > 4 || strlen(buff) != 0) {
+              errx(4, "Invalid size of arguments");
+           }
+
+           pid_t pid = fork();
+           if (pid < 0) {
+              err(5, "Error with fork");
+           }
+           if (pid == 0) {
+                   if((execlp(command, buff, buff, (char*)NULL)) < 0) {
+                  err(6, "Error trying to execute command");
+                   }
+           }
+           int status;
+           if ((wait(&status)) < 0) {
+              err(7, "Error with wait system call");
+           }
+
+       }
+           else {
+          buff[index] = c;
+          index++;
+           }
+        }
+        if (bytes_read < 0) {
+       err(3, "Error while reading from stdin");
+        }
+
+        exit(0);
+}
+
+
+````
