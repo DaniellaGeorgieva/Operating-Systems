@@ -974,6 +974,113 @@ int main (void) {
         }
         exit(0);
 }
+````
+### 84) 2018-SE-01
 
+````C
+#include "fcntl.h"
+#include "unistd.h"
+#include "stdlib.h"
+#include "stdlib.h"
+#include "err.h"
+#include "string.h"
+#include "sys/wait.h"
+int main (int argc, char** argv) {
+
+        if(argc != 2){
+       errx(1, "Invalid number of arguments");
+        }
+        char dir[50];
+        stpcpy(dir, argv[1]);
+
+        int a[2];
+        if((pipe(a)) < 0) {
+        err(2, "Error while pipe one");
+        }
+
+        pid_t pid = fork();
+        if(pid == -1) {
+        err(3, "Error while first fork");
+        }
+        if(pid == 0) {
+        close(a[0]);
+        if ((dup2(a[1], 1)) < 0) {
+           err(4, "Error while dup2");
+        }
+        if ((execlp("find","find", dir, "-mindepth", "1", "-type", "f", "-printf", "%T@ %f\n", (char*)NULL)) < 0) {
+            err(5, "Error executing execlp");
+        }
+        }
+        close(a[1]);
+
+        int b[2];
+        if ((pipe(b)) < 0) {
+        err(2, "Error with pipe");
+        }
+        pid = fork();
+        if(pid == -1) {
+       err(3, "Error with second fork");
+        }
+        if(pid == 0) {
+                close(b[0]);
+       if((dup2(a[0], 0)) < 0){
+          err(4, "Error with dup2");
+       }
+       if ((dup2(b[1], 1)) < 0) {
+          err(4, "Error with dup2");
+       }
+       if ((execlp("sort", "sort", "-n", "-r", (char*)NULL)) < 0) {
+          err(5, "Error with exec");
+       }
+        }
+        close(a[0]);
+        close(b[1]);
+
+        int c[2];
+        if((pipe(c)) < 0) {
+        err(2, "Error with pipe three");
+        }
+
+        pid = fork();
+        if(pid == -1) {
+        err(3, "Error with fork three");
+        }
+
+        if (pid == 0) {
+       close(c[0]);
+       if ((dup2(b[0],0)) < 0){
+          err(4, "Error with dup2");
+       }
+       if ((dup2(c[1], 1)) < 0) {
+          err(4, "Error with dup2");
+       }
+       if ((execlp("head", "head", "-n1", (char*)NULL)) < 0) {
+          err(5, "Error with executing head");
+       }
+        }
+        close(b[0]);
+        close(c[1]);
+
+        int status;
+        if ((wait(&status)) < 0) {
+        err(6, "Error with wait system call");
+        }
+        if(!WIFEXITED(status)) {
+        errx(7, "Child process did not terminate nirmally");
+        }
+        if(WEXITSTATUS(status) != 0) {
+        errx(8, "Child process did not exit with 0");
+        }
+
+        if((dup2(c[0], 0)) < 0) {
+       err(4, "Error with dup2");
+        }
+        if ((execlp("cut", "cut", "-d", "' '", "-f2", (char*)NULL)) < 0) {
+       err(5, "Error with executing cut command");
+        }
+
+        close(c[0]);
+        exit(0);
+}
 
 ````
