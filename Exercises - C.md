@@ -770,5 +770,88 @@ int main (int argc, char** argv) {
 
 ### 66) 2018-SE-01
 ````C
+#include "err.h"
+#include "fcntl.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "string.h"
+#include "stdbool.h"
+int main (int argc, char** argv) {
+
+        if(argc != 3)
+        {
+                errx(1, "Invalid number of arguments");
+        }
+
+        char input[1024];
+
+        char set1[1024];
+        char set2[1024];
+
+
+        if((read(0, &input, sizeof(input))) < 0) {
+        err(2, "Error while reading from stdin");
+        }
+        bool buff[256];
+        int len = strlen(input);
+        if(strcmp(argv[1], "-d") == 0)
+        {
+                strcpy(set1, argv[2]);
+                int lenSet = strlen(set1);
+
+                for(int i = 0; i < lenSet; i++){
+           buff[(int)set1[i]] = 1;
+                }
+
+                for(int i = 0; i < len; i++){
+           if(buff[(int)input[i]] == 0){
+             if((write(1, &input[i], sizeof(input[i]))) < 0) {
+                err(3,"Error writing to stdout");
+             }
+           }
+                }
+        }
+        else if (strcmp(argv[1], "-s") == 0)
+        {
+                strcpy(set1, argv[2]);
+                int lenSet = strlen(set1);
+                for(int i = 0; i < lenSet; i++){
+                        buff[(int)set1[i]] = 1;
+                }
+                for(int i = 0; i < len; i++){
+            if(buff[(int)input[i]] == 1 && input[i] == input[i+1]){
+                 continue;
+            }
+
+                    else{
+                                if((write(1, &input[i], sizeof(input[i]))) < 0) {
+                     err(3, "Error while writing to stdout");
+                }
+            }
+        }
+        }
+        else {
+                strcpy(set1, argv[1]);
+                strcpy(set2, argv[2]);
+
+                int lenS1 = strlen(set1);
+                int lenS2 = strlen(set2);
+
+                if(lenS1 != lenS2) {
+            errx(4, "Strings should be the same length");
+                }
+
+                for(int i = 0; i < len; i++){
+            for(int j = 0; j < lenS1; j++) {
+               if (input[i] == set1[j]){
+                  if((write(1, &set2[j], sizeof(set2[j]))) < 0) {
+                     err(3, "Error while writing to stdout");
+                  }
+               }
+            }
+        }
+        }
+        exit(0);
+}
 
 ````
