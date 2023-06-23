@@ -1201,3 +1201,76 @@ int main(int argc, char** argv) {
         exit(0);
 }
 ````
+
+### 2016-SE-03
+````C
+#include "fcntl.h"
+#include "err.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/stat.h"
+#include "stdint.h"
+
+int main (int argc, char** argv) {
+
+        if(argc != 2) {
+                errx(1, "Invalid number of arguments");
+        }
+        int fd = open(argv[1], O_RDWR);
+        if (fd < 0) {
+                err(2, "Error while opening file %s", argv[1]);
+        }
+
+        struct stat s;
+        if ((fstat(fd, &s)) < 0) {
+       err(3, "Error while fstat");
+        }
+        if (s.st_size % 4 != 0) {
+                errx(4, "Invalid file size");
+        }
+
+        int count = s.st_size / 4;
+
+        uint32_t curr;
+        uint32_t min;
+        int min_idx;
+
+        for (int i = 0; i < count -1; i++){
+                min_idx = i;
+                if ((lseek(fd, i, SEEK_SET)) < 0){
+                        err(5, "Error while lseek");
+                }
+                if ((read(fd, &min, sizeof(min))) < 0) {
+                        err(6, "Error while reading from file %s", argv[1]);
+                }
+                for(int j = i+1; j < count; j++){
+                        if((lseek(fd, j, SEEK_SET)) < 0) {
+               err(5, "Error while lseek");
+                        }
+                        if ((read(fd, &curr, sizeof(curr))) < 0) {
+               err(6, "Error while reading from file %s", argv[1]);
+                        }
+                        if (curr < min) {
+               min_idx = j;
+                        }
+                }
+                if (min_idx != i) {
+            if ((lseek(fd, min_idx, SEEK_SET)) < 0) {
+                err(5, "Error while lseek");
+            }
+            if((write(fd, &min, sizeof(min))) < 0) {
+                err(7, "Error while writing to file");
+            }
+            if ((lseek(fd, i, SEEK_SET)) < 0) {
+                err(5, "Error while lseek");
+            }
+            if ((write(fd, &curr, sizeof(curr))) < 0) {
+                err(7, "Error while writing to file");
+            }
+                }
+        }
+        close(fd);
+        exit(0);
+}
+
+````
