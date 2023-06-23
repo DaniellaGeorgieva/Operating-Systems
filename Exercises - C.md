@@ -221,73 +221,99 @@ int main (int argc, char **argv) {
 ### 63) 2017-SE-02
 ````C
 #include "fcntl.h"
+#include "stdlib.h"
 #include "err.h"
 #include "unistd.h"
-#include "stdint.h"
-#include "stdlib.h"
+#include "stdbool.h"
 #include "string.h"
+#include "stdio.h"
 
-void readAndCat(int fd, uint8_t flag);
-void readAndCat(int fd, uint8_t flag) {
-        int bytes_count = 0;
-        uint8_t lines = 0;
+int counter = 1;
 
-        uint8_t symbol;
-        if (flag == 0) {
-                while ((bytes_count = read(fd, &symbol, sizeof(symbol))) > 0){
-             if((write(1, &symbol, sizeof(symbol))) < 0) {
-                err(1, "Error trying to write on the stdout");
-             }
+void writeToStdout (int fd, bool flag);
+int openSafe (char* argument);
+
+void writeToStdout (int fd, bool flag) {
+        bool endRow = true;
+        char c;
+        int bytes_read;
+        if (flag == true) {
+        while((bytes_read = read(fd, &c, sizeof(c))) >0) {
+                if (endRow) {
+                if((dprintf(1, "%d ", counter)) < 0){
+                   errx(5, "Error while formating stdout");
                 }
-                if(bytes_count < 0) {
-            err(2, "Error trying to read from file with descriptor %d",fd);
+                endRow = false;
                 }
+            if ((write(1, &c, sizeof(c))) < 0) {
+                err(4, "Error while reading to stdout");
+
+            }
+            if ( c == '\n'){
+                endRow = true;
+                counter++;
+            }
         }
-        else if (flag == 1) {
-                lines++;
-                if ((write(1, &lines, sizeof(lines))) < 0) {
-           err(1, "Error trying to write on the stdout");
+        if (bytes_read < 0) {
+           err(2, "Error while reading from file");
+        }
+        }
+        else {
+                while((bytes_read = read(fd, &c, sizeof(c))) > 0) {
+                        if((write(1, &c, sizeof(c))) < 0) {
+                err(3, "Error while writing to stdout");
+                        }
+
                 }
-       while ((bytes_count = read (fd, &symbol, sizeof(symbol))) > 0) {
-           if ((write(1, &symbol, sizeof(symbol))) < 0) {
-               err(1, "Error trying to write on the stdout");
-           }
-           if (symbol == '\n'){
-              if ((write(1, &lines, sizeof(lines))) < 0) { //does not write the nums on the stdout, if dprintf used - it works
-                  err(1, "Error trying to write on the stdout");
-              }
-               lines += 1;
-           }
-       }
-       if (bytes_count < 0) {
-          err(2, "Error trying to read from a file with descriptor %d", fd);
-       }
+                if (bytes_read < 0) {
+           err(2, "Error while reading from file");
+                }
         }
 }
-int main (int argc, char **argv) {
-   uint8_t flag = 0;
-   if (argc == 1) {
-      readAndCat(0, 0);
-   }
-   else if (argc > 1) {
-     if (strcmp(argv[1], "-n") == 0) {
-        flag = 1;
-        if (argc == 2) {
-           readAndCat(0, 1);
+
+int openSafe (char* argument){
+        int fd;
+        if (strcmp(argument, "-") == 0) {
+                fd = 0;
+                return fd;
         }
-     }
-     int fd = 0;
-     for (int i = 1 + flag; i < argc; i++) {
-         if (strcmp(argv[i], "-") != 0) {
-            if ((fd = open(argv[i], O_RDONLY)) < 0) {
-               err(3, "Error trying to open file %s", argv[i]);
-            }
-         }
-                 readAndCat(fd, flag);
-     }
-    close(fd);
-   }
-  exit(0);
+        else {
+                fd = open(argument, O_RDONLY);
+                if(fd == -1) {
+           err(1, "Error while opening file %s", argument);
+                }
+                else {
+            return fd;
+                }
+        }
+        return -1;
+}
+
+int main (int argc, char **argv) {
+
+        int fd;
+
+        if (argc == 1) {
+         writeToStdout(0, false);
+        }
+        if (argc == 2 && strcmp(argv[1], "-n") == 0){
+                writeToStdout(0, true);
+        }
+        else{
+                if(strcmp(argv[1], "-n") == 0){
+                        for(int i = 2; i < argc; i++) {
+               fd = openSafe(argv[i]);
+               writeToStdout(fd, true);
+                        }
+                }
+                else {
+                        for(int i = 1; i < argc; i++){
+               fd = openSafe(argv[i]);
+               writeToStdout(fd, false);
+                        }
+                }
+        }
+    exit(0);
 }
 
 ````
@@ -1084,7 +1110,7 @@ int main (int argc, char** argv) {
 }
 
 ````
-### 88) 2020SE-03
+### 88) 2020-SE-03
 ````C
 #include "err.h"
 #include "fcntl.h"
