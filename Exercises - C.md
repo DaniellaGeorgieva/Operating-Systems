@@ -1274,3 +1274,69 @@ int main (int argc, char** argv) {
 }
 
 ````
+
+### 87) 2020-SE-02
+````C
+#include "err.h"
+#include "fcntl.h"
+#include "stdlib.h"
+#include "unistd.h"
+
+int main (int argc, char** argv) {
+
+        if (argc != 3) {
+                errx(1, "Invalid number of arguments");
+        }
+        int p[2];
+        if ((pipe(p)) == -1 ) {
+                err(2, "Error while pipe");
+        }
+        pid_t pid = fork();
+        if (pid == -1) {
+                err(3, "Error while forking");
+        }
+        if (pid == 0) {
+                close(p[0]);
+                if ((dup2(p[1], 1)) < 0) {
+                        err(4, "Error while dup2");
+                }
+                if ((execlp("xxd", "xxd", argv[1], (char*)NULL)) < 0) {
+                        err(5, "Error while executing command");
+                }
+        }
+
+        close(p[1]);
+
+        int fd = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+        if (fd < 0) {
+                err(6, "Error while opening file");
+        }
+
+        int bytes_read;
+        char current;
+        while((bytes_read = read(p[0], &current, sizeof(current))) > 0) {
+                if (current == 0x55) {
+                        continue;
+                }
+                if (current == 0x7D) {
+                        char toPrint;
+                        if((read(p[0], &toPrint, sizeof(toPrint))) < 0) {
+                                err(7, "Error while reading from pipe");
+                        }
+                        toPrint = toPrint ^ 0x20;
+                        //check if byte is one of the following in the task
+                        if ((write(fd, &toPrint, sizeof(toPrint))) < 0) {
+                                err(8, "Error while writing to file %s", argv[2]);
+                        }
+                }
+        }
+        if (bytes_read < 0) {
+                err(7, "Error while reading from pipe");
+        }
+        close(p[0]);
+        close(fd);
+
+        exit(0);
+}
+
+````
